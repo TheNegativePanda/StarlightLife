@@ -1,0 +1,110 @@
+local function UpdateTeam(p: player):
+    set {_color::*} to light red, orange, yellow, lime, aqua and magenta
+    if {StarlightLife::Data::%{_p}'s uuid%::Lives} > 6:
+        set team color of team of {_p} to magenta
+    else if {StarlightLife::Data::%{_p}'s uuid%::lives} <= 0:
+        set team color of team of {_p} to gray
+    else:
+        set team color of team of {_p} to {_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}
+
+local function RollRoles():
+    loop 3 times:
+        send title "&a&l%4 - loop-iteration%" to all players
+        play sound "ui.button.click" to all players
+        wait 2 seconds
+    send title "&7&lYou are..." to all players
+    play sound "entity.breeze.inhale" to all players
+    set {_p::*} to all players where [{StarlightLife::Data::%input's uuid%::Lives} > 1]
+    loop (a random integer between 1 and 3) times:
+        set {StarlightLife::Roles::DuskBringer::%loop-iteration%} to a random player out of {_p::*}
+        remove {StarlightLife::Roles::DuskBringer::%loop-iteration%} from {_p::*}
+    loop (a random integer between 1 and 2) times:
+        set {StarlightLife::Roles::DawnBringer::%loop-iteration%} to a random player out of {_p::*}
+        remove {StarlightLife::Roles::DawnBringer::%loop-iteration%} from {_p::*}
+    wait 2 seconds
+    send title "&5&lA Duskbringer" to {StarlightLife::Roles::DuskBringer::*}
+    send title "&d&lA Dawnbringer" to {StarlightLife::Roles::DawnBringer::*}
+    send title "&a&lNot Special" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
+
+on join:
+    if team of player isn't set:
+        add player to team named "%player%"
+        UpdateTeam(player)
+
+on load:
+    loop all players where [team of input isn't set]:
+        add player to team named "%loop-player%"
+        UpdateTeam(loop-player)
+        
+
+command /test2 arguments:
+    description: description
+    permission: permission
+    trigger:
+        RollRoles()
+
+on death of player:
+    {StarlightLife::Session} != true
+    remove 25 from {StarlightLife::Data::%victim's uuid%::Starlight}
+    send title "&c-25☆" to victim
+    if victim != attacker:
+        add 10 to {StarlightLife::Data::%attacker's uuid%::Starlight}
+        send title "&a+10☆" to attacker
+        if {StarlightLife::Roles::DuskBringer::*} contains attacker:
+            remove 50 from {StarlightLife::Data::%victim's uuid%::Starlight}
+            send title "&c-75☆" to victim
+            add 10 to {StarlightLife::Data::%attacker's uuid%::Starlight}
+            send title "&a+20☆" to attacker
+            remove attacker from {StarlightLife::Roles::DuskBringer::*}
+    if {StarlightLife::Data::%victim's uuid%::Starlight} <= 0:
+        remove 1 from {StarlightLife::Data::%victim's uuid%::Lives}
+        set {StarlightLife::Data::%victim's uuid%::Starlight} to 100
+        UpdateTeam(victim)
+        if {StarlightLife::Data::%victim's uuid%::Lives} = 0:
+            strike lightning effect at victim
+            if gamerule keepInventory of world of victim is true:
+                drop items in victim's inventory at victim
+            
+            set gamemode of victim to spectator
+            set death message to "&c%uncolored death message%"
+
+
+every second:
+    loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
+        light level at loop-player <= 4
+        if {StarlightLife::Timer::%loop-player's uuid%} isn't set:
+            set {StarlightLife::Timer::%loop-player's uuid%} to a random integer between 1 and 5
+        remove 1 from {StarlightLife::Timer::%loop-player's uuid%}
+        if {StarlightLife::Timer::%loop-player's uuid%} = 0:
+            set {StarlightLife::Timer::%loop-player's uuid%} to a random integer between 1 and 5
+            remove (a random integer between 1 and 5) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} > 1
+            remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
+            if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
+                remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
+                set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
+                UpdateTeam(loop-player)
+                if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
+                    strike lightning effect at loop-player
+                    if gamerule keepInventory of world of loop-player is true:
+                        drop items in loop-player's inventory at loop-player
+                    kill loop-player
+                    set gamemode of loop-player to spectator
+                    broadcast "&c%loop-player% has run out of starlight"
+      
+every 5 seconds:
+    loop {StarlightLife::Roles::DuskBringer::*}:
+        
+
+
+every 5 ticks:
+    loop all players where [{StarlightLife::Data::%input's uuid%::Lives} > 0]:
+        send actionbar formatted "<%team color of team of loop-player%>%{StarlightLife::Data::%loop-player's uuid%::Starlight}% ☆" to loop-player
+
+command /test:
+    description: description
+    permission: permission
+    trigger:
+        loop all players:
+            set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
+            set {StarlightLife::Data::%loop-player's uuid%::Lives} to 6
+            
