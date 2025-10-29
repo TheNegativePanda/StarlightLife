@@ -64,9 +64,7 @@ on death of player:
         UpdateTeam(victim)
         if {StarlightLife::Data::%victim's uuid%::Lives} = 0:
             strike lightning effect at victim
-            if gamerule keepInventory of world of victim is true:
-                drop items in victim's inventory at victim
-            
+            drop items in victim's inventory at victim if gamerule keepInventory of world of victim is true
             set gamemode of victim to spectator
             set death message to "&c%uncolored death message%"
 
@@ -87,8 +85,7 @@ every minute:
                 UpdateTeam(loop-player)
                 if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
                     strike lightning effect at loop-player
-                    if gamerule keepInventory of world of loop-player is true:
-                        drop items in loop-player's inventory at loop-player
+                    drop items in loop-player's inventory at loop-player if gamerule keepInventory of world of loop-player is true
                     kill loop-player
                     set gamemode of loop-player to spectator
                     broadcast "&c%loop-player% has run out of starlight"
@@ -117,4 +114,5 @@ command /test:
         loop all players:
             set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
             set {StarlightLife::Data::%loop-player's uuid%::Lives} to 6
+            UpdateTeam(loop-player)
             
