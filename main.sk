@@ -92,13 +92,13 @@ every minute:
       
 every 5 seconds:
     loop {StarlightLife::Roles::DuskBringer::*}:
-        loop players in radius 5 of loop-value:
+        loop players in radius 5 of loop-value where [gamemode of input = survival]:
             remove 1 from {StarlightLife::Data::%loop-player's uuid%::Starlight}
             add 1 to {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
 
 every 10 seconds:
     loop {StarlightLife::Roles::DawnBringer::*}:
-        loop players in radius 5 of loop-value:
+        loop players in radius 5 of loop-value where [gamemode of input = survival]:
             remove 1 from {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
             add 1 to {StarlightLife::Data::%loop-value-2's uuid%::Starlight}
 
