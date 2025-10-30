@@ -27,7 +27,7 @@ local function RollRoles():
     send "&7You are &5&lA Duskbringer&r. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {StarlightLife::Roles::DuskBringer::*}
     play sound "block.note_block.didgeridoo" to {StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*}
     send title "&d&lA Dawnbringer" to {StarlightLife::Roles::DawnBringer::*}
-    # TODO: send message with explanation of the roles
+    send "&7You are &d&lA Dawnbringer&r. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {StarlightLife::Roles::DawnBringer::*}
     send title "&a&lNot Special" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
 
 local function Eliminate(p: player, dm: string = "none"):
@@ -48,7 +48,7 @@ on load:
         UpdateTeam(loop-player)
         
 
-command /test2 arguments:
+command /test2: # Testing
     description: description
     permission: permission
     trigger:
@@ -71,7 +71,7 @@ on death of player:
             remove attacker from {StarlightLife::Roles::DuskBringer::*}
     if {StarlightLife::Data::%victim's uuid%::Starlight} <= 0:
         remove 1 from {StarlightLife::Data::%victim's uuid%::Lives}
-        set {StarlightLife::Data::%victim's uuid%::Starlight} to 100
+        add 100 to {StarlightLife::Data::%victim's uuid%::Starlight}
         UpdateTeam(victim)
         if {StarlightLife::Data::%victim's uuid%::Lives} = 0:
             Eliminate(victim)
@@ -90,7 +90,7 @@ every second:
             remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
             if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
                 remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
-                set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
+                add 100 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
                 UpdateTeam(loop-player)
                 if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
                     Eliminate(loop-player, "&c%loop-player% has been eliminated!")
@@ -102,7 +102,7 @@ every 5 seconds:
             add 1 to {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
             if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
                 remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
-                set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
+                add 100 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
                 UpdateTeam(loop-player)
                 if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
                     Eliminate(loop-player, "&c%loop-player% has been eliminated!")
@@ -114,7 +114,7 @@ every 10 seconds:
             add 1 to {StarlightLife::Data::%loop-value-2's uuid%::Starlight}
             if {StarlightLife::Data::%loop-value-1's uuid%::Starlight} <= 0:
                 remove 1 from {StarlightLife::Data::%loop-value-1's uuid%::Lives}
-                set {StarlightLife::Data::%loop-value-1's uuid%::Starlight} to 100
+                add 100 to {StarlightLife::Data::%loop-value-1's uuid%::Starlight} 
                 UpdateTeam(loop-value-1)
                 if {StarlightLife::Data::%loop-value-1's uuid%::Lives} = 0:
                     Eliminate(loop-value-1, "&c%loop-value-1% has been eliminated!")
@@ -127,7 +127,7 @@ every 5 ticks:
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} > 0]:
         send actionbar formatted "<%team color of team of loop-player%>%{StarlightLife::Data::%loop-player's uuid%::Starlight}% ☆" to loop-player
 
-command /test:
+command /test: # Testing
     description: description
     permission: permission
     trigger:
@@ -155,7 +155,7 @@ command /claim [<player>]:
                 send title "&c-25☆" with subtitle "&c%player% has been cured!" to arg-1
                 if {StarlightLife::Data::%arg-1's uuid%::Starlight} <= 0:
                     remove 1 from {StarlightLife::Data::%arg-1's uuid%::Lives}
-                    set {StarlightLife::Data::%arg-1's uuid%::Starlight} to 100
+                    add 100 to {StarlightLife::Data::%arg-1's uuid%::Starlight}
                     UpdateTeam(arg-1)
                     if {StarlightLife::Data::%arg-1's uuid%::Lives} = 0:
                         Eliminate(arg-1, "&c%arg-1% has been eliminated!")
