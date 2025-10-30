@@ -130,7 +130,7 @@ every 5 seconds:
 
 every 10 minutes:
     loop {StarlightLife::Roles::DuskBringer::*}:
-        apply darkness whilst hiding particles to loop-value for 1 minute
+        apply darkness without particles to loop-value for 1 minute
         remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-value's uuid%::Starlight}
         if {StarlightLife::Data::%loop-value's uuid%::Starlight} <= 0:
             remove 1 from {StarlightLife::Data::%loop-value's uuid%::Lives}
