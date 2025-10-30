@@ -36,7 +36,32 @@ local function Eliminate(p: player, dm: string = "none"):
     drop items in {_p}'s inventory at {_p} if gamerule keepInventory of world of {_p} is true
     set gamemode of {_p} to spectator
     broadcast {_dm} if {_dm} != "none"
+    wait 1 tick
+    send "&4You have been eliminated! Better luck next time." to {_p}
 
+local function FailRoles():
+    loop {StarlightLife::Roles::DuskBringer::*}:
+        remove 75 from {StarlightLife::Data::%loop-value's uuid%::Starlight}
+        if {StarlightLife::Data::%loop-value's uuid%::Starlight} <= 0:
+            remove 1 from {StarlightLife::Data::%loop-value's uuid%::Lives}
+            add 100 to {StarlightLife::Data::%loop-value's uuid%::Starlight} 
+            if {StarlightLife::Data::%loop-value's uuid%::Lives} = 0:
+                Eliminate(loop-value, "&c%loop-value% has been eliminated!")
+        send title "&cYou have failed!" with subtitle "&c-75☆" to loop-value
+        send "&4You have failed to cure yourself. Therefore you have lost 75 starlight." to loop-value
+    clear {StarlightLife::Roles::*}
+
+local function Start():
+    loop 3 times:
+        send title "&a&l%4 - loop-iteration%" to all players
+        play sound "ui.button.click" to all players 
+        wait 1 second
+    send title "&a&lThe Stars Shine Bright" to all players
+    play sound "item.goat_horn.sound.7" to all players
+    loop all players:
+        set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
+        set {StarlightLife::Data::%loop-player's uuid%::Lives} to 6
+        UpdateTeam(loop-player)
 on join:
     if team of player isn't set:
         add player to team named "%player%"
@@ -48,14 +73,8 @@ on load:
         UpdateTeam(loop-player)
         
 
-command /test2: # Testing
-    description: description
-    permission: permission
-    trigger:
-        RollRoles()
-
 on death of player:
-    {StarlightLife::Session} != true
+    {StarlightLife::Session} = true
     remove 25 from {StarlightLife::Data::%victim's uuid%::Starlight}
     send title "&c-25☆" to victim
     if victim != attacker:
@@ -79,6 +98,7 @@ on death of player:
 
 
 every second:
+    {StarlightLife::Session} = true
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
         light level at loop-player <= 4
         if {StarlightLife::Timer::%loop-player's uuid%} isn't set:
@@ -96,6 +116,7 @@ every second:
                     Eliminate(loop-player, "&c%loop-player% has been eliminated!")
       
 every 5 seconds:
+    {StarlightLife::Session} = true
     loop {StarlightLife::Roles::DuskBringer::*}:
         loop players in radius 5 of loop-value where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
             remove 1 from {StarlightLife::Data::%loop-player's uuid%::Starlight}
@@ -107,7 +128,19 @@ every 5 seconds:
                 if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
                     Eliminate(loop-player, "&c%loop-player% has been eliminated!")
 
+every 10 minutes:
+    loop {StarlightLife::Roles::DuskBringer::*}:
+        apply darkness whilst hiding particles to loop-value for 1 minute
+        remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-value's uuid%::Starlight}
+        if {StarlightLife::Data::%loop-value's uuid%::Starlight} <= 0:
+            remove 1 from {StarlightLife::Data::%loop-value's uuid%::Lives}
+            add 100 to {StarlightLife::Data::%loop-value's uuid%::Starlight}
+            UpdateTeam(loop-value)
+            if {StarlightLife::Data::%loop-value's uuid%::Lives} = 0:
+                Eliminate(loop-value, "&c%loop-value% has been eliminated!")
+
 every 10 seconds:
+    {StarlightLife::Session} = true
     loop {StarlightLife::Roles::DawnBringer::*}:
         loop players in radius 5 of loop-value where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
             remove 1 from {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
@@ -126,20 +159,128 @@ every 10 seconds:
 every 5 ticks:
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} > 0]:
         send actionbar formatted "<%team color of team of loop-player%>%{StarlightLife::Data::%loop-player's uuid%::Starlight}% ☆" to loop-player
-
-command /test: # Testing
-    description: description
-    permission: permission
-    trigger:
-        loop all players:
-            set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
-            set {StarlightLife::Data::%loop-player's uuid%::Lives} to 6
-            UpdateTeam(loop-player)
+      
+     
+on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl":
+    set tab completions for position 1 to "modify", "session", "roles" and "reset"
+    if tab arg-1 = "session":
+        set tab completions for position 2 to "start", "end" and "pause"
+    else if tab arg-1 = "roles":
+        set tab completions for position 2 to "check", "set", "fail" and "roll"
+        if tab arg-2 = "check" or "set":
+            set tab completions for position 3 to all players
+            if tab arg-2 = "set":
+                set tab completions for position 4 to "duskbringer", "dawnbringer" and "none"
+    else if tab arg-1 = "modify":
+        set tab completions for position 2 to "lives", "starlight" and "eliminate"
+        set tab completions for position 3 to all players
+        if tab arg-2 = "lives" or "starlight":
+            set tab completions for position 4 to "set", "remove", "check" and "add"
             
 
+
+command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
+    permission: op
+    aliases: sl
+    prefix: life
+    trigger:
+        if arg-1 = "reset":
+            if arg-2 = "confirm":
+                delete {StarlightLife::*}
+                broadcast "&c&lThis Season's save data has been cleared by %sender%"
+                wait 5 seconds
+                set {_b} to mini message from "<green><click:run_command:'/life:starlightlife start'>Click here to start a new season."
+                if sender is a player:
+                    send component {_b}
+                else:	
+                    send component {_b} to all operators
+            else:
+                send formatted "<red>You are about to delete all save data for this season."
+                wait 1 second
+                send component mini message from "<red>This action is <b>PERMANENT</b>!"
+                wait 1 second
+                send formatted "<red>Run <underline>/%command% reset confirm.<reset><red> To complete the reset." 
+        else if arg-1 = "start":
+            send "&a&lA new Season has been started by %sender%" to all operators
+            set {StarlightLife::Session} to true
+            Start()
+        else if arg-1 = "session":
+            if arg-2 = "start":
+                broadcast "&a&lThe Session has startedd!"
+                play sound "block.beacon.activate" to all players
+                set {StarlightLife::Session} to true
+            else if arg-2 = "end":
+                FailRoles()
+                broadcast "&c&lThe Session has ended!"
+                play sound "block.beacon.deactivate" to all players
+                set {StarlightLife::Session} to false
+            else if arg-2 = "pause":
+                if {StarlightLife::Sesssion} = true:
+                    broadcast "&c&lThe Session has been paused!"
+                    play sound "block.beacon.deactivate" to all players
+                if {StarlightLife::Sesssion} = false:
+                    broadcast "&a&lThe Session has been resumed!"
+                    play sound "block.beacon.activate" to all players
+                set {StarlightLife::Session} to inverse of {StarlightLife::Session}
+        else if arg-1 = "modify":
+            set {_p} to arg-3 parsed as player
+            set {_color::*} to light red, orange, yellow, lime, aqua and magenta
+            set {_lives} to 6
+            set {_lives} to {StarlightLife::Data::%{_p}'s uuid%::Lives} if {StarlightLife::Data::%{_p}'s uuid%::Lives} <= 6
+            if arg-2 = "lives" or "starlight":
+                if arg-4 = "check":
+                    send formatted "<%team color of team of {_p}%>%{_p}%<light grey> has <%{_color::%{_lives}%}%>%{StarlightLife::Data::%{_p}'s uuid%::%strict proper case arg-2%}% <light grey>%strict proper case arg-2%."
+                else if arg-4 = "set", "add" or "remove":
+                    set {_i} to arg-5 parsed as integer
+                    if arg-4 = "set":
+                        set {StarlightLife::Data::%{_p}'s uuid%::%strict proper case arg-2%} to {_i}
+                    else if arg-4 = "add":
+                        add {_i} to {StarlightLife::Data::%{_p}'s uuid%::%strict proper case arg-2%}
+                     
+                    else if arg-4 = "remove":
+                        add {_i} to {StarlightLife::Data::%{_p}'s uuid%::%strict proper case arg-2%}
+                if {StarlightLife::Data::%{_p}'s uuid%::Starlight} <= 0:
+                    remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Lives}
+                    add 100 to {StarlightLife::Data::%{_p}'s uuid%::Starlight} 
+                    if {StarlightLife::Data::%{_p}'s uuid%::Lives} = 0:
+                        Eliminate({_p}, "&c%{_p}% has been eliminated!")
+                UpdateTeam({_p})
+                send "&a%{_p}% now has %{StarlightLife::Data::%{_p}'s uuid%::%strict proper case arg-2%}% %arg-2%"
+            else if arg-2 = "eliminate":
+                Eliminate({_p}, "&c%{_p}% has been eliminated!")
+        else if arg-1 = "roles":
+            if arg-2 = "roll":
+                send "&aRolling roles..."
+                RollRoles()
+            else if arg-2 = "fail":
+                FailRoles()
+            else if arg-2 = "check" or "set":
+                set {_p} to arg-3 parsed as player
+                if arg-2 = "check":
+                    if {StarlightLife::Roles::DuskBringer::*} contains {_p}:
+                        send formatted "<%team color of team of {_p}%>%{_p}% is &5&lA Duskbringer."
+                    else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
+                        send formatted "<%team color of team of {_p}%>%{_p}%&7 is &d&lA Dawnbringer."
+                    else:
+                        send formatted "<%team color of team of {_p}%>%{_p}%&7 does not have a role."
+                else:
+                    if {StarlightLife::Roles::DuskBringer::*} contains {_p}:
+                        remove {_p} from {StarlightLife::Roles::DuskBringer::*}
+                        remove {_p} from {StarlightLife::Roles::DawnBringer::*}
+                        if arg-4 is "none":
+                            send "&aYour role was removed" to {_p}
+                            send "&a%{_p}% no longer has a role."
+                            stop
+                    add {_p} to {StarlightLife::Roles::%proper case arg-4%}
+                    if {StarlightLife::Roles::DuskBringer::*} contains {_p}:
+                        send "&7You are &5&lA Duskbringer&r. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {_p} 
+                    else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
+                        send "&7You are &d&lA Dawnbringer&r. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {_p}
+                    send "&a%{_p}%'s role has been set to %proper case arg-4% by %sender%"
+                                
+            
 command /claim [<player>]:
-    description: description
-    permission: permission
+    prefix: life
     trigger:
         set {_end} to "!"
         if arg-1 is set:
