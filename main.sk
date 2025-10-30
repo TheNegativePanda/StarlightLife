@@ -24,9 +24,18 @@ local function RollRoles():
         remove {StarlightLife::Roles::DawnBringer::%loop-iteration%} from {_p::*}
     wait 2 seconds
     send title "&5&lA Duskbringer" to {StarlightLife::Roles::DuskBringer::*}
+    send "&7You are &5&lA Duskbringer&r. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {StarlightLife::Roles::DuskBringer::*}
+    play sound "block.note_block.didgeridoo" to {StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*}
     send title "&d&lA Dawnbringer" to {StarlightLife::Roles::DawnBringer::*}
     # TODO: send message with explanation of the roles
     send title "&a&lNot Special" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
+
+local function Eliminate(p: player, dm: string = "none"):
+    send title "&c&lYou have run out of lives!" to {_p} 
+    strike lightning effect at {_p}
+    drop items in {_p}'s inventory at {_p} if gamerule keepInventory of world of {_p} is true
+    set gamemode of {_p} to spectator
+    broadcast {_dm} if {_dm} != "none"
 
 on join:
     if team of player isn't set:
@@ -35,7 +44,7 @@ on join:
 
 on load:
     loop all players where [team of input isn't set]:
-        add player to team named "%loop-player%"
+        add loop-player to team named "%loop-player%"
         UpdateTeam(loop-player)
         
 
@@ -53,23 +62,23 @@ on death of player:
         add 10 to {StarlightLife::Data::%attacker's uuid%::Starlight}
         send title "&a+10☆" to attacker
         if {StarlightLife::Roles::DuskBringer::*} contains attacker:
-            remove 50 from {StarlightLife::Data::%victim's uuid%::Starlight}
-            send title "&c-75☆" to victim
+            remove 25 from {StarlightLife::Data::%victim's uuid%::Starlight}
+            send title "&c-50☆" with subtitle "&c%attacker% has been cured!" to victim
+            play sound "block.note_block.didgeridoo" to victim
             add 10 to {StarlightLife::Data::%attacker's uuid%::Starlight}
-            send title "&a+20☆" to attacker
+            send title "&a+20☆" with subtitle "&aYou are cured!" to attacker
+            play sound "block.note_block.bell" to attacker
             remove attacker from {StarlightLife::Roles::DuskBringer::*}
     if {StarlightLife::Data::%victim's uuid%::Starlight} <= 0:
         remove 1 from {StarlightLife::Data::%victim's uuid%::Lives}
         set {StarlightLife::Data::%victim's uuid%::Starlight} to 100
         UpdateTeam(victim)
         if {StarlightLife::Data::%victim's uuid%::Lives} = 0:
-            strike lightning effect at victim
-            drop items in victim's inventory at victim if gamerule keepInventory of world of victim is true
-            set gamemode of victim to spectator
+            Eliminate(victim)
             set death message to "&c%uncolored death message%"
 
 
-every minute:
+every second:
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
         light level at loop-player <= 4
         if {StarlightLife::Timer::%loop-player's uuid%} isn't set:
@@ -84,23 +93,34 @@ every minute:
                 set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
                 UpdateTeam(loop-player)
                 if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
-                    strike lightning effect at loop-player
-                    drop items in loop-player's inventory at loop-player if gamerule keepInventory of world of loop-player is true
-                    kill loop-player
-                    set gamemode of loop-player to spectator
-                    broadcast "&c%loop-player% has run out of starlight"
+                    Eliminate(loop-player, "&c%loop-player% has been eliminated!")
       
 every 5 seconds:
     loop {StarlightLife::Roles::DuskBringer::*}:
         loop players in radius 5 of loop-value where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
             remove 1 from {StarlightLife::Data::%loop-player's uuid%::Starlight}
             add 1 to {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
+            if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
+                remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
+                set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
+                UpdateTeam(loop-player)
+                if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
+                    Eliminate(loop-player, "&c%loop-player% has been eliminated!")
 
 every 10 seconds:
     loop {StarlightLife::Roles::DawnBringer::*}:
         loop players in radius 5 of loop-value where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
             remove 1 from {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
             add 1 to {StarlightLife::Data::%loop-value-2's uuid%::Starlight}
+            if {StarlightLife::Data::%loop-value-1's uuid%::Starlight} <= 0:
+                remove 1 from {StarlightLife::Data::%loop-value-1's uuid%::Lives}
+                set {StarlightLife::Data::%loop-value-1's uuid%::Starlight} to 100
+                UpdateTeam(loop-value-1)
+                if {StarlightLife::Data::%loop-value-1's uuid%::Lives} = 0:
+                    Eliminate(loop-value-1, "&c%loop-value-1% has been eliminated!")
+
+
+
 
 
 every 5 ticks:
@@ -116,3 +136,33 @@ command /test:
             set {StarlightLife::Data::%loop-player's uuid%::Lives} to 6
             UpdateTeam(loop-player)
             
+
+command /claim [<player>]:
+    description: description
+    permission: permission
+    trigger:
+        set {_end} to "!"
+        if arg-1 is set:
+            set {_end} to " on %arg-1%!"
+        if player != arg-1:
+            add 10 to {StarlightLife::Data::%player's uuid%::Starlight}
+            send title "&a+10☆" to player
+            if all: 
+                {StarlightLife::Roles::DuskBringer::*} contains player
+                arg-1 is set
+            then:
+                remove 25 from {StarlightLife::Data::%arg-1's uuid%::Starlight}
+                send title "&c-25☆" with subtitle "&c%player% has been cured!" to arg-1
+                if {StarlightLife::Data::%arg-1's uuid%::Starlight} <= 0:
+                    remove 1 from {StarlightLife::Data::%arg-1's uuid%::Lives}
+                    set {StarlightLife::Data::%arg-1's uuid%::Starlight} to 100
+                    UpdateTeam(arg-1)
+                    if {StarlightLife::Data::%arg-1's uuid%::Lives} = 0:
+                        Eliminate(arg-1, "&c%arg-1% has been eliminated!")
+                add 10 to {StarlightLife::Data::%player's uuid%::Starlight}
+                send title "&a+20☆" with subtitle "&aYou are cured!" to player
+                remove player from {StarlightLife::Roles::DuskBringer::*}
+            broadcast "&a%player% has claimed a kill%{_end}%"
+            stop
+        send "&cYou cannot claim a kill on yourself."
+        
