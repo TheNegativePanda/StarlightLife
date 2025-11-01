@@ -1,5 +1,5 @@
 local function UpdateTeam(p: player):
-    set {_color::*} to light red, orange, yellow, lime, aqua and magenta
+    set {_color::*} to light red, orange, yellow, lime, light blue and magenta
     if {StarlightLife::Data::%{_p}'s uuid%::Lives} > 6:
         set team color of team of {_p} to magenta
     else if {StarlightLife::Data::%{_p}'s uuid%::lives} <= 0:
@@ -39,6 +39,7 @@ local function Eliminate(p: player, dm: string = "none"):
     wait 1 tick
     send "&4You have been eliminated! Better luck next time." to {_p}
 
+
 local function FailRoles():
     loop {StarlightLife::Roles::DuskBringer::*}:
         remove 75 from {StarlightLife::Data::%loop-value's uuid%::Starlight}
@@ -62,6 +63,32 @@ local function Start():
         set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
         set {StarlightLife::Data::%loop-player's uuid%::Lives} to 6
         UpdateTeam(loop-player)
+
+
+local function loseStarlight(p: player , i: integer):
+    make 100 of dust using dustOption(team color of team of {_p}, 1) at {_p} with offset vector(1, 1, 1) with force
+    send title formatted "<%team color of team of {_p}%><bold>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
+    wait 10 ticks
+    loop {_i} times:
+        play sound "block.note_block.hat" to {_p}
+        remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Starlight}
+        send title formatted "<%team color of team of {_p}%>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
+        wait 10 ticks
+        if {StarlightLife::Data::%{_p}'s uuid%::Starlight} <= 0:
+            make 50 of dust using dustOption(team color of team of {_p}, 3) at {_p} with offset vector(2, 2, 2) with force
+            remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Lives}
+            add 100 to {StarlightLife::Data::%{_p}'s uuid%::Starlight}
+            UpdateTeam({_p})
+            make 50 of dust using dustOption(team color of team of {_p}, 3) at {_p} with offset vector(2, 2, 2) with force
+            if {StarlightLife::Data::%{_p}'s uuid%::Lives} = 0:
+                Eliminate({_p}, "&c%{_p}% has been eliminated!")
+                stop
+                   
+    play sound "block.note_block.bell" to {_p}
+    make 100 of dust using dustOption(team color of team of {_p}, 1) at {_p} with offset vector(1, 1, 1) with force
+    send title formatted "<%team color of team of {_p}%><bold>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
+
+
 on join:
     if team of player isn't set:
         add player to team named "%player%"
@@ -97,7 +124,7 @@ on death of player:
             set death message to "&c%uncolored death message%"
 
 
-every second:
+every minute:
     {StarlightLife::Session} = true
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
         light level at loop-player <= 4
@@ -106,14 +133,16 @@ every second:
         remove 1 from {StarlightLife::Timer::%loop-player's uuid%}
         if {StarlightLife::Timer::%loop-player's uuid%} = 0:
             set {StarlightLife::Timer::%loop-player's uuid%} to a random integer between 1 and 5
-            remove (a random integer between 1 and 5) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} > 1
-            remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
-            if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
-                remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
-                add 100 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
-                UpdateTeam(loop-player)
-                if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
-                    Eliminate(loop-player, "&c%loop-player% has been eliminated!")
+            loseStarlight(loop-player, a random integer between 1 and 5) if {StarlightLife::Data::%loop-player's uuid%::Lives} > 1
+            loseStarlight(loop-player, a random integer between 1 and 3) if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
+            # remove (a random integer between 1 and 5) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} > 1
+            # remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
+            # if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
+            #     remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
+            #     add 100 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
+            #     UpdateTeam(loop-player)
+            #     if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
+            #         Eliminate(loop-player, "&c%loop-player% has been eliminated!")
       
 every 5 seconds:
     {StarlightLife::Session} = true
