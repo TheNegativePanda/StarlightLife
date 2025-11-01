@@ -135,14 +135,6 @@ every minute:
             set {StarlightLife::Timer::%loop-player's uuid%} to a random integer between 1 and 5
             loseStarlight(loop-player, a random integer between 1 and 5) if {StarlightLife::Data::%loop-player's uuid%::Lives} > 1
             loseStarlight(loop-player, a random integer between 1 and 3) if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
-            # remove (a random integer between 1 and 5) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} > 1
-            # remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-player's uuid%::Starlight} if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
-            # if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
-            #     remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
-            #     add 100 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
-            #     UpdateTeam(loop-player)
-            #     if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
-            #         Eliminate(loop-player, "&c%loop-player% has been eliminated!")
       
 every 5 seconds:
     {StarlightLife::Session} = true
