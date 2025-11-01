@@ -97,7 +97,7 @@ on death of player:
             set death message to "&c%uncolored death message%"
 
 
-every second:
+every minute:
     {StarlightLife::Session} = true
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
         light level at loop-player <= 4
