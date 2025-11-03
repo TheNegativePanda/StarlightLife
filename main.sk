@@ -9,11 +9,12 @@ local function UpdateTeam(p: player):
 
 local function RollRoles():
     clear {StarlightLife::Roles::*}
+    set {_color::*} to light red, yellow and lime
     loop 3 times:
-        send title "&a&l%4 - loop-iteration%" to all players
-        play sound "ui.button.click" to all players
-        wait 2 seconds
-    send title "&7&lYou are..." to all players
+        send title formatted "<%{_color::%4 - loop-iteration%}%>%4 - loop-iteration%" to all players
+        play sound "ui.button.click" to all players 
+        wait 1 second
+    send title "&7You are..." to all players
     play sound "entity.breeze.inhale" to all players
     set {_p::*} to all players where [{StarlightLife::Data::%input's uuid%::Lives} > 1]
     loop (a random integer between 1 and 3) times:
@@ -23,15 +24,15 @@ local function RollRoles():
         set {StarlightLife::Roles::DawnBringer::%loop-iteration%} to a random player out of {_p::*}
         remove {StarlightLife::Roles::DawnBringer::%loop-iteration%} from {_p::*}
     wait 2 seconds
-    send title "&5&lA Duskbringer" to {StarlightLife::Roles::DuskBringer::*}
-    send "&7You are &5&lA Duskbringer&r. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {StarlightLife::Roles::DuskBringer::*}
+    send title "&5The Duskbringer" to {StarlightLife::Roles::DuskBringer::*}
+    send "&7You are &5The Duskbringer&r. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {StarlightLife::Roles::DuskBringer::*}
     play sound "block.note_block.didgeridoo" to {StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*}
-    send title "&d&lA Dawnbringer" to {StarlightLife::Roles::DawnBringer::*}
-    send "&7You are &d&lA Dawnbringer&r. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {StarlightLife::Roles::DawnBringer::*}
-    send title "&a&lNot Special" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
+    send title "&fA Dawnbringer" to {StarlightLife::Roles::DawnBringer::*}
+    send "&7You are &fThe Dawnbringer&r. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {StarlightLife::Roles::DawnBringer::*}
+    send title "&aNot Special" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
 
 local function Eliminate(p: player, dm: string = "none"):
-    send title "&c&lYou have run out of lives!" to {_p} 
+    send title "&cYou have run out of lives!" to {_p} 
     strike lightning effect at {_p}
     drop items in {_p}'s inventory at {_p} if gamerule keepInventory of world of {_p} is true
     set gamemode of {_p} to spectator
@@ -53,11 +54,12 @@ local function FailRoles():
     clear {StarlightLife::Roles::*}
 
 local function Start():
+    set {_color::*} to light red, yellow and lime
     loop 3 times:
-        send title "&a&l%4 - loop-iteration%" to all players
+        send title formatted "<%{_color::%4 - loop-iteration%}%>%4 - loop-iteration%" to all players
         play sound "ui.button.click" to all players 
         wait 1 second
-    send title "&a&lThe Stars Shine Bright" to all players
+    send title "&aThe Constellation Begins..." to all players
     play sound "item.goat_horn.sound.7" to all players
     loop all players:
         set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
@@ -208,7 +210,7 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
         if arg-1 = "reset":
             if arg-2 = "confirm":
                 delete {StarlightLife::*}
-                broadcast "&c&lThis Season's save data has been cleared by %sender%"
+                broadcast "&cThis Season's save data has been cleared by %sender%"
                 wait 5 seconds
                 set {_b} to mini message from "<green><click:run_command:'/life:starlightlife start'>Click here to start a new season."
                 if sender is a player:
@@ -222,25 +224,25 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                 wait 1 second
                 send formatted "<red>Run <underline>/%command% reset confirm.<reset><red> To complete the reset." 
         else if arg-1 = "start":
-            send "&a&lA new Season has been started by %sender%" to all operators
+            send "&aA new Season has been started by %sender%" to all operators
             set {StarlightLife::Session} to true
             Start()
         else if arg-1 = "session":
             if arg-2 = "start":
-                broadcast "&a&lThe Session has startedd!"
+                broadcast "&aThe Session has startedd!"
                 play sound "block.beacon.activate" to all players
                 set {StarlightLife::Session} to true
             else if arg-2 = "end":
                 FailRoles()
-                broadcast "&c&lThe Session has ended!"
+                broadcast "&cThe Session has ended!"
                 play sound "block.beacon.deactivate" to all players
                 set {StarlightLife::Session} to false
             else if arg-2 = "pause":
                 if {StarlightLife::Sesssion} = true:
-                    broadcast "&c&lThe Session has been paused!"
+                    broadcast "&cThe Session has been paused!"
                     play sound "block.beacon.deactivate" to all players
                 if {StarlightLife::Sesssion} = false:
-                    broadcast "&a&lThe Session has been resumed!"
+                    broadcast "&aThe Session has been resumed!"
                     play sound "block.beacon.activate" to all players
                 set {StarlightLife::Session} to inverse of {StarlightLife::Session}
         else if arg-1 = "modify":
@@ -279,9 +281,9 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                 set {_p} to arg-3 parsed as player
                 if arg-2 = "check":
                     if {StarlightLife::Roles::DuskBringer::*} contains {_p}:
-                        send formatted "<%team color of team of {_p}%>%{_p}% is &5&lA Duskbringer."
+                        send formatted "<%team color of team of {_p}%>%{_p}% is &5A Duskbringer."
                     else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
-                        send formatted "<%team color of team of {_p}%>%{_p}%&7 is &d&lA Dawnbringer."
+                        send formatted "<%team color of team of {_p}%>%{_p}%&7 is &dA Dawnbringer."
                     else:
                         send formatted "<%team color of team of {_p}%>%{_p}%&7 does not have a role."
                 else:
@@ -294,9 +296,9 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                             stop
                     add {_p} to {StarlightLife::Roles::%proper case arg-4%}
                     if {StarlightLife::Roles::DuskBringer::*} contains {_p}:
-                        send "&7You are &5&lA Duskbringer&r. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {_p} 
+                        send "&7You are &5A Duskbringer&r. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {_p} 
                     else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
-                        send "&7You are &d&lA Dawnbringer&r. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {_p}
+                        send "&7You are &dA Dawnbringer&r. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {_p}
                     send "&a%{_p}%'s role has been set to %proper case arg-4% by %sender%"
                                 
             
