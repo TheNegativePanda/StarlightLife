@@ -32,8 +32,12 @@ local function RollRoles():
     send title "&aNot Special" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
 
 local function Eliminate(p: player, dm: string = "none"):
-    send title "&cYou have run out of lives!" to {_p} 
+    send title "&c%{_p}%" with subtitle "&fwas starstruck!" to all players
+    send title "&cYou have run out of lives!" with subtitle "" to {_p} 
     strike lightning effect at {_p}
+    make 100 of electric_spark at {_p} with offset vector(1,1,1) with force
+    make 100 of glow at {_p} with offset vector(1,1,1) with force
+    make 100 of cloud at {_p} with offset vector(1,1,1) with force
     drop items in {_p}'s inventory at {_p} if gamerule keepInventory of world of {_p} is true
     set gamemode of {_p} to spectator
     broadcast {_dm} if {_dm} != "none"
