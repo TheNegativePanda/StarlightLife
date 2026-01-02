@@ -143,13 +143,13 @@ on death of player:
             play sound "block.note_block.bell" to attacker
             set {_index} to first index of attacker in {StarlightLife::Roles::DuskBringer::*}
             delete {StarlightLife::Roles::DuskBringer::%{_index}%}
-        if {StarlightLife::Data::%attacker's uuid%::Starlight} > 150:
-            add 1 to {StarlightLife::Data::%attacker's uuid%::Lives}
-            remove 150 from {StarlightLife::Data::%attacker's uuid%::Starlight}
-            colorChange(attacker)
+        set {StarlightLife::Data::%attacker's uuid%::Starlight} to 150 if {StarlightLife::Data::%attacker's uuid%::Starlight} > 150
     if {StarlightLife::Data::%victim's uuid%::Starlight} <= 0:
-        wait 1 tick
         remove 1 from {StarlightLife::Data::%victim's uuid%::Lives}
+        if {StarlightLife::Data::%victim's uuid%::Lives} = 0:
+            Eliminate(victim)
+            set death message to "&c%uncolored death message%"
+            stop
         add 100 to {StarlightLife::Data::%victim's uuid%::Starlight}
         colorChange(victim)
 
@@ -208,6 +208,7 @@ local function DrainPlayers(p: player):
         loop players in radius 5 of {_p} where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
             loop-player != {_p}
             loop-player is alive
+            {StarlightLife::Data::%loop-player's uuid%::Starlight} < 150
             remove {_int} from {StarlightLife::Data::%loop-player's uuid%::Starlight}
             add {_int} to {StarlightLife::Data::%{_p}'s uuid%::Starlight}
             if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
@@ -218,14 +219,8 @@ local function DrainPlayers(p: player):
                 remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Lives}
                 add 100 to {StarlightLife::Data::%{_p}'s uuid%::Starlight}
                 colorChange({_p})
-            if {StarlightLife::Data::%loop-player's uuid%::Starlight} > 150:
-                add 1 to {StarlightLife::Data::%loop-player's uuid%::Lives}
-                remove 150 from {StarlightLife::Data::%loop-player's uuid%::Starlight}
-                colorChange(loop-player)
-            if {StarlightLife::Data::%{_p}'s uuid%::Starlight} > 150:
-                add 1 to {StarlightLife::Data::%{_p}'s uuid%::Lives}
-                remove 150 from {StarlightLife::Data::%{_p}'s uuid%::Starlight}
-                colorChange({_p})
+            set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 150 if {StarlightLife::Data::%loop-player's uuid%::Starlight} > 150
+            set {StarlightLife::Data::%{_p}'s uuid%::Starlight} to 150 if {StarlightLife::Data::%{_p}'s uuid%::Starlight} > 150
 
 every second:
     loop {StarlightLife::Roles::DuskBringer::*}:
@@ -259,7 +254,7 @@ every second:
 
 every 5 ticks:
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} > 0]:
-        send actionbar formatted "<%team color of team of loop-player%>%{StarlightLife::Data::%loop-player's uuid%::Starlight}% ☆" to loop-player
+        send actionbar formatted "<%team color of team of loop-player%>☆ %{StarlightLife::Data::%loop-player's uuid%::Starlight}% ☆" to loop-player
       
      
 on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl":
@@ -405,10 +400,7 @@ command /claim [<player>]:
                 add 10 to {StarlightLife::Data::%player's uuid%::Starlight}
                 send title "&a+20☆" with subtitle "&aYou are cured!" to player
                 remove player from {StarlightLife::Roles::DuskBringer::*}
-            if {StarlightLife::Data::%player's uuid%::Starlight} > 150:
-                add 1 to {StarlightLife::Data::%player's uuid%::Lives}
-                remove 150 from {StarlightLife::Data::%player's uuid%::Starlight}
-                colorChange(player)
+            set {StarlightLife::Data::%player's uuid%::Starlight} to 150 if {StarlightLife::Data::%player's uuid%::Starlight} > 150
             broadcast "&a%player% has claimed a kill%{_end}%"
             stop
         send "&cYou cannot claim a kill on yourself."
