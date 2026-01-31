@@ -25,16 +25,16 @@ local function RollRoles():
         remove {StarlightLife::Roles::DawnBringer::%loop-iteration%} from {_p::*}
     wait 2 seconds
     send title "&5The Duskbringer" to {StarlightLife::Roles::DuskBringer::*}
-    send "&7You are &5The Duskbringer&7. &7You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {StarlightLife::Roles::DuskBringer::*}
+    send "&7You are &5&lThe Duskbringer&r&7. You must kill one player within the session to be &acured&7, &cor you will be set down to your next life stage&7. While you have this role, every 10 minutes you will receive the Darkness effect for 1 minute, alongside losing 1-3 Starlight. However, when at least 3 blocks around people, you drain 1☆ from them every 10 seconds and gain it for yourself. " to {StarlightLife::Roles::DuskBringer::*}
     play sound "block.note_block.didgeridoo" to {StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*}
     send title "&9The Dawnbringer" to {StarlightLife::Roles::DawnBringer::*}
-    send "&7You are &9The Dawnbringer&r&7. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {StarlightLife::Roles::DawnBringer::*}
+    send "&7You are &9The Dawnbringer&7. This is a passive role and does not require a kill to be cured. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. Have fun being the light of the server!" to {StarlightLife::Roles::DawnBringer::*}
     send title "&aNOT a Dusk/Dawnbringer" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
     play sound "block.note_block.bell" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
 
 
 local function Eliminate(p: player, dm: string = "none"):
-    send title "&c%{_p}%" with subtitle "&fwas starstruck!" to all players
+    send title "&c%{_p}%" with subtitle "&fflew too close to the sun!" to all players
     send title "&cYou have run out of lives!" with subtitle "" to {_p} 
     strike lightning effect at {_p}
     make 100 of electric_spark at {_p} with offset vector(1,1,1) with force
@@ -49,14 +49,12 @@ local function Eliminate(p: player, dm: string = "none"):
 
 local function FailRoles():
     loop {StarlightLife::Roles::DuskBringer::*}:
-        remove 75 from {StarlightLife::Data::%loop-value's uuid%::Starlight}
-        if {StarlightLife::Data::%loop-value's uuid%::Starlight} <= 0:
-            remove 1 from {StarlightLife::Data::%loop-value's uuid%::Lives}
-            add 100 to {StarlightLife::Data::%loop-value's uuid%::Starlight} 
-            if {StarlightLife::Data::%loop-value's uuid%::Lives} = 0:
-                Eliminate(loop-value, "&c%loop-value% has been eliminated!")
+        remove 1 from {StarlightLife::Data::%loop-value's uuid%::Lives}
+        set {StarlightLife::Data::%loop-value's uuid%::Starlight} to 100
+        if {StarlightLife::Data::%loop-value's uuid%::Lives} = 0:
+            Eliminate(loop-value, "&c%loop-value% has been eliminated!")
         send title "&cYou have failed!" with subtitle "&c-75☆" to loop-value
-        send "&4You have failed to cure yourself. Therefore you have lost 75 starlight." to loop-value
+        send "&4You have failed to cure yourself. Therefore you have lost a life." to loop-value
     clear {StarlightLife::Roles::*}
 
 local function Start():
@@ -84,7 +82,7 @@ local function loseStarlight(p: player , i: integer):
         wait 10 ticks
         if {StarlightLife::Data::%{_p}'s uuid%::Starlight} <= 0:
             remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Lives}
-            add 100 to {StarlightLife::Data::%{_p}'s uuid%::Starlight}
+            set {StarlightLife::Data::%{_p}'s uuid%::Starlight} to 100
             colorChange({_p}) 
     play sound "block.note_block.bell" to {_p}
     make 100 of dust using dustOption(team color of team of {_p}, 1) at {_p} with offset vector(1, 1, 1) with force
@@ -150,7 +148,7 @@ on death of player:
             Eliminate(victim)
             set death message to "&c%uncolored death message%"
             stop
-        add 100 to {StarlightLife::Data::%victim's uuid%::Starlight}
+        set {StarlightLife::Data::%victim's uuid%::Starlight} to 100
         colorChange(victim)
 
 
@@ -159,28 +157,16 @@ every second:
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
         loop-player is alive
         if light level at loop-player > 4:
-            set {StarlightLife::Timer::%loop-player's uuid%} to "%a random integer between 1 and 5% minutes" parsed as timespan
+            set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
         light level at loop-player <= 4
         if {StarlightLife::Timer::%loop-player's uuid%} isn't set:
-            set {StarlightLife::Timer::%loop-player's uuid%} to "%a random integer between 1 and 5% minutes" parsed as timespan
+            set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
         remove 1 second from {StarlightLife::Timer::%loop-player's uuid%}
         if {StarlightLife::Timer::%loop-player's uuid%} = 0:
-            set {StarlightLife::Timer::%loop-player's uuid%} to "%a random integer between 1 and 5% minutes" parsed as timespan
-            loseStarlight(loop-player, a random integer between 1 and 5) if {StarlightLife::Data::%loop-player's uuid%::Lives} > 1
-            loseStarlight(loop-player, a random integer between 1 and 3) if {StarlightLife::Data::%loop-player's uuid%::Lives} = 1
-      
-# every 5 seconds:
-#     {StarlightLife::Session} = true
-#     loop {StarlightLife::Roles::DuskBringer::*}:
-#         loop players in radius 5 of loop-value where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
-#             remove 1 from {StarlightLife::Data::%loop-player's uuid%::Starlight}
-#             add 1 to {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
-#             if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
-#                 remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
-#                 add 100 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
-#                 UpdateTeam(loop-player)
-#                 if {StarlightLife::Data::%loop-player's uuid%::Lives} = 0:
-#                     Eliminate(loop-player, "&c%loop-player% has been eliminated!")
+            set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
+            loseStarlight(loop-player, a random integer between 2 and 5)
+            
+
 on player move:
     {StarlightLife::Session} = true
     if all: 
@@ -200,7 +186,7 @@ local function DrainPlayers(p: player):
     while {_p}'s metadata "PlayerProximity" = true:
         wait {_wait}
         if any: 
-            size of (players in radius 5 of {_p} where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]) = 1
+            size of (players in radius 3 of {_p} where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]) = 1
             {_p}'s metadata "PlayerProximity" isn't set
         then:
             delete {_p}'s metadata "PlayerProximity"
@@ -213,11 +199,11 @@ local function DrainPlayers(p: player):
             add {_int} to {StarlightLife::Data::%{_p}'s uuid%::Starlight}
             if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
                 remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
-                add 100 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
+                set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
                 colorChange(loop-player)
             if {StarlightLife::Data::%{_p}'s uuid%::Starlight} <= 0:
                 remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Lives}
-                add 100 to {StarlightLife::Data::%{_p}'s uuid%::Starlight}
+                set {StarlightLife::Data::%{_p}'s uuid%::Starlight} to 100
                 colorChange({_p})
             set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 150 if {StarlightLife::Data::%loop-player's uuid%::Starlight} > 150
             set {StarlightLife::Data::%{_p}'s uuid%::Starlight} to 150 if {StarlightLife::Data::%{_p}'s uuid%::Starlight} > 150
@@ -233,21 +219,9 @@ every second:
         remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-value's uuid%::Starlight}
         if {StarlightLife::Data::%loop-value's uuid%::Starlight} <= 0:
             remove 1 from {StarlightLife::Data::%loop-value's uuid%::Lives}
-            add 100 to {StarlightLife::Data::%loop-value's uuid%::Starlight}
+            set {StarlightLife::Data::%loop-value's uuid%::Starlight} to 100
             colorChange({_p})
 
-# every 10 seconds:
-#     {StarlightLife::Session} = true
-#     loop {StarlightLife::Roles::DawnBringer::*}:
-#         loop players in radius 5 of loop-value where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
-#             remove 1 from {StarlightLife::Data::%loop-value-1's uuid%::Starlight}
-#             add 1 to {StarlightLife::Data::%loop-value-2's uuid%::Starlight}
-#             if {StarlightLife::Data::%loop-value-1's uuid%::Starlight} <= 0:
-#                 remove 1 from {StarlightLife::Data::%loop-value-1's uuid%::Lives}
-#                 add 100 to {StarlightLife::Data::%loop-value-1's uuid%::Starlight} 
-#                 UpdateTeam(loop-value-1)
-#                 if {StarlightLife::Data::%loop-value-1's uuid%::Lives} = 0:
-#                     Eliminate(loop-value-1, "&c%loop-value-1% has been eliminated!")
 
 
 
@@ -337,7 +311,7 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                         add {_i} to {StarlightLife::Data::%{_p}'s uuid%::%strict proper case arg-2%}
                 if {StarlightLife::Data::%{_p}'s uuid%::Starlight} <= 0:
                     remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Lives}
-                    add 100 to {StarlightLife::Data::%{_p}'s uuid%::Starlight} 
+                    set {StarlightLife::Data::%{_p}'s uuid%::Starlight} to 100
                     if {StarlightLife::Data::%{_p}'s uuid%::Lives} = 0:
                         Eliminate({_p}, "&c%{_p}% has been eliminated!")
                 UpdateTeam({_p})
@@ -395,7 +369,7 @@ command /claim [<player>]:
                 send title "&c-25☆" with subtitle "&c%player% has been cured!" to arg-1
                 if {StarlightLife::Data::%arg-1's uuid%::Starlight} <= 0:
                     remove 1 from {StarlightLife::Data::%arg-1's uuid%::Lives}
-                    add 100 to {StarlightLife::Data::%arg-1's uuid%::Starlight}
+                    set {StarlightLife::Data::%arg-1's uuid%::Starlight} to 100
                     colorChange(arg-1)
                 add 10 to {StarlightLife::Data::%player's uuid%::Starlight}
                 send title "&a+20☆" with subtitle "&aYou are cured!" to player
