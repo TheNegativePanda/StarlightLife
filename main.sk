@@ -256,7 +256,8 @@ local function DrainPlayers(p: player):
                 set {_index} to first index of {_p} in {StarlightLife::Roles::DawnBringer::*}
                 delete {StarlightLife::Roles::DawnBringer::%{_index}%}
                 delete {StarlightLife::Data::%{_p}'s uuid%::DawnbringerCure}
-                exit loop
+                delete {_p}'s metadata "PlayerProximity"
+                exit loops
                 
                 
 
