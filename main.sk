@@ -1,3 +1,5 @@
+# Starlight Life script by TheNegativePanda
+
 local function UpdateTeam(p: player):
     set {_color::*} to light red, orange, yellow, lime, light blue and magenta 
     if {StarlightLife::Data::%{_p}'s uuid%::lives} <= 0:
@@ -184,22 +186,6 @@ every second:
             if {StarlightLife::Data::%loop-player's uuid%::Timer::2} = 0 seconds:
                 loseStarlight(loop-player, a random integer between 1 and 3) 
                 set {StarlightLife::Data::%loop-player's uuid%::Timer::2} to "%a random integer between 3 and 5% minutes" parsed as timespan
-
-
-command /light:
-    description: description
-    permission: permission
-    trigger:
-        send light level at player
-
-command /timers [<text>]:
-    description: description
-    permission: permission
-    trigger:
-        if arg-1 = "reset":
-            delete {StarlightLife::Data::%player's uuid%::Timer::*}
-            stop
-        send {StarlightLife::Data::%player's uuid%::Timer::*}
 
 
 at 19:00 in "world":
