@@ -25,10 +25,10 @@ local function RollRoles():
         remove {StarlightLife::Roles::DawnBringer::%loop-iteration%} from {_p::*}
     wait 2 seconds
     send title "&5The Duskbringer" to {StarlightLife::Roles::DuskBringer::*}
-    send "&7You are &5&lThe Duskbringer&r&7. You must kill one player within the session to be &acured&7, &cor you will be set down to your next life stage&7. While you have this role, every 10 minutes you will receive the Darkness effect for 1 minute, alongside losing 1-3 Starlight. However, when at least 3 blocks around people, you drain 1☆ from them every 10 seconds and gain it for yourself. " to {StarlightLife::Roles::DuskBringer::*}
+    send "&7You are &5&lThe Duskbringer&r&7. You must kill one player within the session to be &acured&7, &cor you will be set down to your next life stage&7. While you have this role, every 10 minutes you will receive the Darkness effect for 1 minute, alongside losing 1-3 Starlight." to {StarlightLife::Roles::DuskBringer::*}
     play sound "block.note_block.didgeridoo" to {StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*}
     send title "&9The Dawnbringer" to {StarlightLife::Roles::DawnBringer::*}
-    send "&7You are &9The Dawnbringer&7. This is a passive role and does not require a kill to be cured. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. Have fun being the light of the server!" to {StarlightLife::Roles::DawnBringer::*}
+    send "&7You are &9&lThe Dawnbringer&r&7. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. After transfering 25 Starlight you will be &acured&7. Have fun being the light of the server!" to {StarlightLife::Roles::DawnBringer::*}
     send title "&aNOT a Dusk/Dawnbringer" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
     play sound "block.note_block.bell" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
 
@@ -150,41 +150,97 @@ on death of player:
             stop
         set {StarlightLife::Data::%victim's uuid%::Starlight} to 100
         colorChange(victim)
+    delete {StarlightLife::Data::%victim's uuid%::Timer::1}
 
+
+# every second:
+#     {StarlightLife::Session} = true
+#     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
+#         loop-player is alive
+#         if light level at loop-player > 4:
+#             set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
+#         light level at loop-player <= 4
+#         if {StarlightLife::Timer::%loop-player's uuid%} isn't set:
+#             set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
+#         remove 1 second from {StarlightLife::Timer::%loop-player's uuid%}
+#         if {StarlightLife::Timer::%loop-player's uuid%} = 0:
+#             set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
+#             loseStarlight(loop-player, a random integer between 2 and 5)
 
 every second:
     {StarlightLife::Session} = true
-    loop all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]:
+    loop (all players where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]):
         loop-player is alive
-        if light level at loop-player > 4:
-            set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
-        light level at loop-player <= 4
-        if {StarlightLife::Timer::%loop-player's uuid%} isn't set:
-            set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
-        remove 1 second from {StarlightLife::Timer::%loop-player's uuid%}
-        if {StarlightLife::Timer::%loop-player's uuid%} = 0:
-            set {StarlightLife::Timer::%loop-player's uuid%} to 5 minutes
-            loseStarlight(loop-player, a random integer between 2 and 5)
+        if light level at loop-player <= 7:
+            set {StarlightLife::Data::%loop-player's uuid%::Timer::1} to "%a random integer between 2 and 5% minutes" parsed as timespan if {StarlightLife::Data::%loop-player's uuid%::Timer::1} isn't set
+            remove 1 second from {StarlightLife::Data::%loop-player's uuid%::Timer::1}
+            if {StarlightLife::Data::%loop-player's uuid%::Timer::1} = 0 seconds:
+                set {_i} to a random integer between 1 and 3 if light level at loop-player >= 5 else a random integer between 1 and 5
+                set {StarlightLife::Data::%loop-player's uuid%::Timer::1} to "%a random integer between 2 and 5% minutes" parsed as timespan
+                loseStarlight(loop-player, {_i})
+        else if light level at loop-player <= 10:
+            set {StarlightLife::Data::%loop-player's uuid%::Timer::2} to "%a random integer between 3 and 5% minutes" parsed as timespan if {StarlightLife::Data::%loop-player's uuid%::Timer::2} isn't set
+            remove 1 second from {StarlightLife::Data::%loop-player's uuid%::Timer::2}
+            if {StarlightLife::Data::%loop-player's uuid%::Timer::2} = 0 seconds:
+                loseStarlight(loop-player, a random integer between 1 and 3) 
+                set {StarlightLife::Data::%loop-player's uuid%::Timer::2} to "%a random integer between 3 and 5% minutes" parsed as timespan
+
+
+command /light:
+    description: description
+    permission: permission
+    trigger:
+        send light level at player
+
+command /timers [<text>]:
+    description: description
+    permission: permission
+    trigger:
+        if arg-1 = "reset":
+            delete {StarlightLife::Data::%player's uuid%::Timer::*}
+            stop
+        send {StarlightLife::Data::%player's uuid%::Timer::*}
+
+
+at 19:00 in "world":
+    {StarlightLife::Session} = true
+    set {-isNightTime} to true
+    loop all players:
+        loseStarlightIn(loop-player, "%a random integer between 0 and 9999% ticks" parsed as timespan)
+    while {-isNightTime} = true:
+        if any:
+            world time of event-world <= 13000
+            world time of event-world >= 23000
+        then:
+            exit loop
+        wait 1 tick
+    delete {-isNightTime}
+
+local function loseStarlightIn(p: player, time: timespan):
+    while {_time} > 0 ticks:
+        stop if {-isNightTime} != true
+        remove 1 tick from {_time}
+        wait 1 tick 
+    loseStarlight({_p}, a random integer between 1 and 3)
+    # if {-isNightTime} = true:
+    #     loseStarlightIn({_p}, "%a random integer between 3 and 5% minutes" parsed as timespan)
+
+
+
             
 
 on player move:
     {StarlightLife::Session} = true
-    if all: 
-        {StarlightLife::Roles::DuskBringer::*} does not contain any of (players in radius 5 of player where [{StarlightLife::Data::%input's uuid%::Lives} >= 1])
-        {StarlightLife::Roles::DawnBringer::*} does not contain any of (players in radius 5 of player where [{StarlightLife::Data::%input's uuid%::Lives} >= 1])
-    then:
-        stop
-    loop {StarlightLife::Roles::DuskBringer::*} and {StarlightLife::Roles::DawnBringer::*}:
+    stop if {StarlightLife::Roles::DawnBringer::*} does not contain any of (players in radius 5 of player where [{StarlightLife::Data::%input's uuid%::Lives} >= 1])
+    loop {StarlightLife::Roles::DawnBringer::*}:
         loop-value's metadata "PlayerProximity" isn't set
         if size of (players in radius 5 of player where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]) > 1:
             DrainPlayers(loop-value)
 
 local function DrainPlayers(p: player):
     set {_p}'s metadata "PlayerProximity" to true
-    set {_wait} to 5 seconds if {StarlightLife::Roles::DuskBringer::*} contains {_p} else 10 seconds
-    set {_int} to 1 if {StarlightLife::Roles::DuskBringer::*} contains {_p} else -1
     while {_p}'s metadata "PlayerProximity" = true:
-        wait {_wait}
+        wait 10 seconds
         if any: 
             size of (players in radius 3 of {_p} where [{StarlightLife::Data::%input's uuid%::Lives} >= 1]) = 1
             {_p}'s metadata "PlayerProximity" isn't set
@@ -195,8 +251,9 @@ local function DrainPlayers(p: player):
             loop-player != {_p}
             loop-player is alive
             {StarlightLife::Data::%loop-player's uuid%::Starlight} < 150
-            remove {_int} from {StarlightLife::Data::%loop-player's uuid%::Starlight}
-            add {_int} to {StarlightLife::Data::%{_p}'s uuid%::Starlight}
+            add 1 to {StarlightLife::Data::%loop-player's uuid%::Starlight}
+            remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Starlight}
+            add 1 to {StarlightLife::Data::%{_p}'s uuid%::DawnbringerCure}
             if {StarlightLife::Data::%loop-player's uuid%::Starlight} <= 0:
                 remove 1 from {StarlightLife::Data::%loop-player's uuid%::Lives}
                 set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 100
@@ -207,6 +264,15 @@ local function DrainPlayers(p: player):
                 colorChange({_p})
             set {StarlightLife::Data::%loop-player's uuid%::Starlight} to 150 if {StarlightLife::Data::%loop-player's uuid%::Starlight} > 150
             set {StarlightLife::Data::%{_p}'s uuid%::Starlight} to 150 if {StarlightLife::Data::%{_p}'s uuid%::Starlight} > 150
+            if {StarlightLife::Data::%{_p}'s uuid%::DawnbringerCure} = 25:
+                send title "&aYou are cured!" to {_p}
+                play sound "block.note_block.bell" to {_p}
+                set {_index} to first index of {_p} in {StarlightLife::Roles::DawnBringer::*}
+                delete {StarlightLife::Roles::DawnBringer::%{_index}%}
+                delete {StarlightLife::Data::%{_p}'s uuid%::DawnbringerCure}
+                exit loop
+                
+                
 
 every second:
     loop {StarlightLife::Roles::DuskBringer::*}:
@@ -216,12 +282,7 @@ every second:
         {StarlightLife::Roles::DuskBringer::%loop-iteration%::Timer} = 0 seconds
         set {StarlightLife::Roles::DuskBringer::%loop-iteration%::Timer} to 10 minutes
         apply darkness without particles to loop-value for 1 minute
-        remove (a random integer between 1 and 3) from {StarlightLife::Data::%loop-value's uuid%::Starlight}
-        if {StarlightLife::Data::%loop-value's uuid%::Starlight} <= 0:
-            remove 1 from {StarlightLife::Data::%loop-value's uuid%::Lives}
-            set {StarlightLife::Data::%loop-value's uuid%::Starlight} to 100
-            colorChange({_p})
-
+        loseStarlight(loop-value, (a random integer between 1 and 3))
 
 
 
@@ -346,9 +407,9 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                         stop
                     add {_p} to {StarlightLife::Roles::%proper case arg-4%::*}
                     if {StarlightLife::Roles::DuskBringer::*} contains {_p}:
-                        send "&7You are &5The Duskbringer&r. &7Every 5 seconds you will transfer starlight to yourself from nearby players. &cHOWEVER&7 You must kill another player by the end of the session to be cured! If you &cfail &7you will &close 75☆" to {_p} 
+                        send "&7You are &5&lThe Duskbringer&r&7. You must kill one player within the session to be &acured&7, &cor you will be set down to your next life stage&7. While you have this role, every 10 minutes you will receive the Darkness effect for 1 minute, alongside losing 1-3 Starlight." to {_p} 
                     else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
-                        send "&7You are &9The Dawnbringer&r. &7Every 10 seconds you will transfer starlight from yourself to nearby players. This cannot be cured." to {_p}
+                        send "&7You are &9&lThe Dawnbringer&r&7. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. After transfering 25 Starlight you will be &acured&7. Have fun being the light of the server!" to {_p}
                     send "&a%{_p}%'s role has been set to %proper case arg-4% by %sender%"
                                 
             
