@@ -257,7 +257,7 @@ local function DrainPlayers(p: player):
                 delete {StarlightLife::Roles::DawnBringer::%{_index}%}
                 delete {StarlightLife::Data::%{_p}'s uuid%::DawnbringerCure}
                 delete {_p}'s metadata "PlayerProximity"
-                exit loops
+                exit loop
                 
                 
 
@@ -275,9 +275,12 @@ every second:
 
 
 every 5 ticks:
+    set {_color::*} to light red, orange, yellow, lime, light blue and magenta
     loop all players where [{StarlightLife::Data::%input's uuid%::Lives} > 0]:
-        send actionbar formatted "<%team color of team of loop-player%>☆ %{StarlightLife::Data::%loop-player's uuid%::Starlight}% ☆" to loop-player
-      
+        if {StarlightLife::Data::%loop-player's uuid%::Lives} > 6:
+            set {_color::%{StarlightLife::Data::%loop-player's uuid%::Lives}%} to magenta 
+        send actionbar formatted "<%{_color::%{StarlightLife::Data::%loop-player's uuid%::Lives}%}%>☆ %{StarlightLife::Data::%loop-player's uuid%::Starlight}% ☆" to loop-player
+    
      
 on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl":
     set tab completions for position 1 to "modify", "session", "roles" and "reset"
@@ -296,6 +299,14 @@ on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl"
             set tab completions for position 4 to "set", "remove", "check" and "add"
             
 
+command /checkrole:
+    trigger:
+        set {_p} to player
+        if {StarlightLife::Roles::DuskBringer::*} contains {_p}:
+            send "&7You are &5&lThe Duskbringer&r&7. You must kill one player within the session to be &acured&7, &cor you will be set down to your next life stage&7. While you have this role, every 10 minutes you will receive the Darkness effect for 1 minute, alongside losing 1-3 Starlight." to {_p} 
+        else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
+            send "&7You are &9&lThe Dawnbringer&r&7. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. After transfering 25 Starlight you will be &acured&7. Have fun being the light of the server!" to {_p}
+                    
 
 command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
     permission: op
