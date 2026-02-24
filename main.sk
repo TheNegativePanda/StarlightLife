@@ -35,7 +35,7 @@ local function RollRoles():
     play sound "block.note_block.bell" to all players where [{StarlightLife::Roles::DawnBringer::*} and {StarlightLife::Roles::DuskBringer::*} does not contain input]
 
 
-local function Eliminate(p: player, dm: string = "none"):
+function Eliminate(p: player, dm: string = "none"):
     send title "&c%{_p}%" with subtitle "&fflew too close to the sun!" to all players
     send title "&cYou have run out of lives!" with subtitle "" to {_p} 
     strike lightning effect at {_p}
@@ -44,6 +44,7 @@ local function Eliminate(p: player, dm: string = "none"):
     make 100 of cloud at {_p} with offset vector(1,1,1) with force
     drop items in {_p}'s inventory at {_p} if gamerule keepInventory of world of {_p} is true
     set gamemode of {_p} to spectator
+    set team color of team of {_p} to gray
     broadcast {_dm} if {_dm} != "none"
     wait 1 tick
     send "&4You have been eliminated! Better luck next time." to {_p}
@@ -98,7 +99,7 @@ local function getNewColor(i: integer):: string:
     return {_color::%{_i}%}
 
 
-local function colorChange(p: player):
+function colorChange(p: player):
     make 50 of dust using dustOption(team color of team of {_p}, 3) at {_p} with offset vector(2, 2, 2) with force
     if {StarlightLife::Data::%{_p}'s uuid%::Lives} = 0:
         Eliminate({_p}, "&c%{_p}% ran out of starlight!")
@@ -284,6 +285,7 @@ every 5 ticks:
      
 on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl":
     set tab completions for position 1 to "modify", "session", "roles" and "reset"
+    add "apocalypse" to tab completions for position 1 if {StarlightLife::Apocalypse::Loaded} = true
     if tab arg-1 = "session":
         set tab completions for position 2 to "start", "end" and "pause"
     else if tab arg-1 = "roles":
@@ -409,6 +411,16 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                     else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
                         send "&7You are &9&lThe Dawnbringer&r&7. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. After transfering 25 Starlight you will be &acured&7. Have fun being the light of the server!" to {_p}
                     send "&a%{_p}%'s role has been set to %proper case arg-4% by %sender%"
+        else if arg-1 = "apocalypse":
+            if {StarlightLife::Apocalypse::Loaded} isn't set:
+                send "&cStarlight Life Apocalypse addone is required to execute this command."
+                stop
+            if arg-2 = "roll":
+                broadcast arg-3
+                if arg-3 parsed as integer is set:
+                    rollDarkness((all players), (arg-3 parsed as integer))
+                else:
+                    rollDarkness(all players)
                                 
             
 command /claim [<player>]:
