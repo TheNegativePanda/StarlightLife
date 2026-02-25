@@ -17,7 +17,22 @@ function rollDarkness(players: players, amount: integer = 1):
             set {_darknessText} to {_darknessText} + "%{_prefix}%<%team color of team of {_player}%>%{_player}%<gray>"
         send formatted "&7You are &5&lThe Darkness&r&7, all of your teams are invalid and your goal is now to infect all the other light players and convert them into Dark Matter via killing them direct or indirect, you act as a leader to the Dark Matter as you are the root of the infection, therefore if you die all existing Dark Matter will also lose 10 starlight. if you fail to convert every other player into Dark Matter you will be set down 2 Life Colors, you may kill other Dark Matter and Darkness players if you wish however this will not contribute towards your overall goal. %{_darknessText}% is the other Darkness, you may work with them to infect the rest of the players" to loop-value
 
-        
+function failDarkness():
+    loop {StarlightLife::Apocalypse::Darkness::*}:
+        remove 2 from {StarlightLife::Data::%loop-value%::Lives}
+        set {StarlightLife::Data::%loop-value%::Starlight} to 100
+        if {StarlightLife::Data::%loop-value%::Lives} <= 0:
+            set {StarlightLife::Data::%loop-value%::Lives} to 1
+        UpdateTeam(offline player from loop-value)
+    loop {StarlightLife::Apocalypse::DarkMatter::*}:
+        remove 1 from {StarlightLife::Data::%loop-value%::Lives}
+        set {StarlightLife::Data::%loop-value%::Starlight} to 100
+        if {StarlightLife::Data::%loop-value%::Lives} <= 0:
+            set {StarlightLife::Data::%loop-value%::Lives} to 1
+        UpdateTeam(offline player from loop-value)
+    send title "&cYou have failed!" to players from ({StarlightLife::Apocalypse::Darkness::*} and {StarlightLife::Apocalypse::DarkMatter::*})
+    broadcast "&5Throughout the relentless and violent night, a dim light shines through the despair of circumstance and the Light has triumphed over the night. Roles Cleared!"
+     
 on load:
     set {StarlightLife::Apocalypse::Loaded} to true
 
@@ -34,7 +49,6 @@ on death of player:
     then:
         if {StarlightLife::Apocalypse::Darkness::*} contains uuid of victim:
             loop {StarlightLife::Apocalypse::DarkMatter::*}:
-                broadcast player from loop-value
                 remove 10 from {StarlightLife::Data::%loop-value%::Starlight}
                 if {StarlightLife::Data::%loop-value%::Starlight} <= 0:
                     remove 1 from {StarlightLife::Data::%loop-value%::Lives}
@@ -47,7 +61,6 @@ on death of player:
                 send formatted "<%team color of team of victim%>%victim%<gray> has died. <red>You have lost 10 ☆" to player from loop-value
 
             loop {StarlightLife::Apocalypse::Darkness::*} where [input != uuid of victim]:
-                broadcast player from loop-value
                 remove 10 from {StarlightLife::Data::%loop-value%::Starlight}
                 if {StarlightLife::Data::%loop-value%::Starlight} <= 0:
                     remove 1 from {StarlightLife::Data::%loop-value%::Lives}
@@ -67,7 +80,21 @@ on death of player:
         while victim is not alive:
             wait 1 tick
         send "&7You are &8&lDark Matter&r&7, you have been &cinfected&7 and must work with other &8&lDark Matter&r&7 as well as &5&lThe Darkness&r&7 infect every other player via killing them direct and indirect, all teams are void while you are &8&lDark Matter&r&7 and if you fail to infect every Light player you will be set down to the next Life Color, you may kill other Dark Matter however this will not help your overall goal." to victim
-        
+        if size of {StarlightLife::Apocalypse::DarkMatter::*} > 12:
+            updateInfectedTeam(victim)
+        else if size of {StarlightLife::Apocalypse::DarkMatter::*} = 12:
+            loop {StarlightLife::Apocalypse::DarkMatter::*} and {StarlightLife::Apocalypse::Darkness::*}:
+                updateInfectedTeam(offline player from loop-value)
+
+function updateInfectedTeam(player: player):
+    if {StarlightLife::Apocalypse::DarkMatter::*} contains uuid of {_player}:
+        set team color of team of {_player} to dark gray
+    else if {StarlightLife::Apocalypse::Darkness::*} contains uuid of {_player}:
+        set team color of team of {_player} to dark purple
+    else:
+        UpdateTeam({_player})
+    
+
 
 on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl" with priority lowest:
     add "apocalypse" to tab completions for position 1
@@ -75,18 +102,6 @@ on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl"
 
 
 
-
-function apocalypseCommand(sender: command sender, args: strings):
-    if {_args::1} = "roll":
-        broadcast {_args::2} 
-        if {_args::2} parsed as integer is set:
-            rollDarkness((all players), ({_args::2} parsed as integer))
-        else:
-            rollDarkness(all players)
-
-command /starlightlifeapocalypse [<text>] [<text>] [<text>] [<text>]:
-    permission: op
-    
 
 
 

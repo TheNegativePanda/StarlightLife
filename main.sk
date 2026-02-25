@@ -1,6 +1,6 @@
 # Starlight Life script by TheNegativePanda
 
-local function UpdateTeam(p: player):
+function UpdateTeam(p: player):
     set {_color::*} to light red, orange, yellow, lime, light blue and magenta 
     if {StarlightLife::Data::%{_p}'s uuid%::lives} <= 0:
         set team color of team of {_p} to gray
@@ -413,14 +413,36 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                     send "&a%{_p}%'s role has been set to %proper case arg-4% by %sender%"
         else if arg-1 = "apocalypse":
             if {StarlightLife::Apocalypse::Loaded} isn't set:
-                send "&cStarlight Life Apocalypse addone is required to execute this command."
+                send "&cStarlight Life Apocalypse addon is required to execute this command."
                 stop
             if arg-2 = "roll":
-                broadcast arg-3
                 if arg-3 parsed as integer is set:
                     rollDarkness((all players), (arg-3 parsed as integer))
                 else:
                     rollDarkness(all players)
+            else if arg-2 = "preset":
+                set {_p} to arg-3 parsed as player
+                set {_p} to arg-3 parsed as offline player if {_p} isn't set
+                add uuid of {_p} to {StarlightLife::Apocalypse::Darkness::*}
+                send "&a%{_p}% has been selected as darkness."
+            else if arg-2 = "setrole":
+                set {_p} to arg-3 parsed as player
+                set {_p} to arg-3 parsed as offline player if {_p} isn't set
+                if arg-4 = "light":
+                    remove uuid of {_p} from {StarlightLife::Apocalypse::Darkness::*} if {StarlightLife::Apocalypse::Darkness::*} contains uuid of {_p}
+                    remove uuid of {_p} from {StarlightLife::Apocalypse::DarkMatter::*} if {StarlightLife::Apocalypse::DarkMatter::*} contains uuid of {_p}
+                    send "&a%{_p}% is now light."
+                    stop
+                if arg-4 != "darkness" or "darkmatter":
+                    send "&c%arg-4% is not a valid role"
+                    stop
+                add uuid of {_p} to {StarlightLife::Apocalypse::%arg-4%::*} if {StarlightLife::Apocalypse::%arg-4%::*} doesn't contain uuid of {_p}
+                send "&a%{_p}% has been set to %strict proper case arg-4%"
+            else if arg-2 = "darkcure":
+                
+
+
+
                                 
             
 command /claim [<player>]:
