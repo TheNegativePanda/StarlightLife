@@ -75,21 +75,22 @@ local function Start():
 
 
 local function loseStarlight(p: player , i: integer):
-    make 100 of dust using dustOption(team color of team of {_p}, 1) at {_p} with offset vector(1, 1, 1) with force
-    send title formatted "<%team color of team of {_p}%><bold>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
+    set {_color::*} to light red, orange, yellow, lime, light blue and magenta 
+    make 100 of dust using dustOption({_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}, 1) at {_p} with offset vector(1, 1, 1) with force
+    send title formatted "<%{_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}%><bold>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
     wait 10 ticks
     loop {_i} times:
         play sound "block.note_block.hat" to {_p}
         remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Starlight}
-        send title formatted "<%team color of team of {_p}%>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
+        send title formatted "<%{_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}%>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
         wait 10 ticks
         if {StarlightLife::Data::%{_p}'s uuid%::Starlight} <= 0:
             remove 1 from {StarlightLife::Data::%{_p}'s uuid%::Lives}
             set {StarlightLife::Data::%{_p}'s uuid%::Starlight} to 100
             colorChange({_p}) 
     play sound "block.note_block.bell" to {_p}
-    make 100 of dust using dustOption(team color of team of {_p}, 1) at {_p} with offset vector(1, 1, 1) with force
-    send title formatted "<%team color of team of {_p}%><bold>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
+    make 100 of dust using dustOption({_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}, 1) at {_p} with offset vector(1, 1, 1) with force
+    send title formatted "<%{_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}%><bold>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
 
 
 local function getNewColor(i: integer):: string:
@@ -285,7 +286,7 @@ every 5 ticks:
      
 on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl":
     set tab completions for position 1 to "modify", "session", "roles" and "reset"
-    add "apocalypse" to tab completions for position 1 if {StarlightLife::Apocalypse::Loaded} = true
+    add "apocalypse" to tab completions for position 1 if "%all enabled scripts%" contains "infection.sk"
     if tab arg-1 = "session":
         set tab completions for position 2 to "start", "end" and "pause"
     else if tab arg-1 = "roles":
@@ -299,6 +300,15 @@ on tab complete of "/starlightlife", "/sl", "/life:starlightlife" and "/life:sl"
         set tab completions for position 3 to all players
         if tab arg-2 = "lives" or "starlight":
             set tab completions for position 4 to "set", "remove", "check" and "add"
+    else if all:
+        tab arg-1 = "apocalypse"
+        "%all enabled scripts%" contains "infection.sk"
+    then:
+        set tab completions for position 2 to "roll", "preset", "setrole", "darkcure", "darkfail", "end" and "lightglow"
+        if tab arg-2 = "preset" or "setrole":
+            set tab completions for position 3 to all players
+            if tab arg-2 = "setrole":
+                set tab completions for position 4 to "darkness", "darkmatter" and "light"
             
 
 command /checkrole:
@@ -308,7 +318,21 @@ command /checkrole:
             send "&7You are &5&lThe Duskbringer&r&7. You must kill one player within the session to be &acured&7, &cor you will be set down to your next life stage&7. While you have this role, every 10 minutes you will receive the Darkness effect for 1 minute, alongside losing 1-3 Starlight." to {_p} 
         else if {StarlightLife::Roles::DawnBringer::*} contains {_p}:
             send "&7You are &9&lThe Dawnbringer&r&7. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. After transfering 25 Starlight you will be &acured&7. Have fun being the light of the server!" to {_p}
-                    
+        else if {StarlightLife::Apocalypse::DarkMatter::*} contains uuid of {_p}:
+            send "&7You are &8&lDark Matter&r&7, you have been &cinfected&7 and must work with other &8&lDark Matter&r&7 as well as &5&lThe Darkness&r&7 infect every other player via killing them direct and indirect, all teams are void while you are &8&lDark Matter&r&7 and if you fail to infect every Light player you will be set down to the next Life Color, you may kill other Dark Matter however this will not help your overall goal." to {_p}
+        else if {StarlightLife::Apocalypse::Darkness::*} contains uuid of {_p}:
+            set {_darknessText} to ""
+            loop {StarlightLife::Apocalypse::Darkness::*} where [input != uuid of {_p} ]:
+                set {_player} to player from loop-value
+                set {_player} to offline player from loop-value if {_player} isn't set
+                set {_prefix} to ", " if loop-iteration-2 >= 2 else ""
+                set {_darknessText} to {_darknessText} + "%{_prefix}%<%team color of team of {_player}%>%{_player}%<gray>"
+            send formatted "&7You are &5&lThe Darkness&r&7, all of your teams are invalid and your goal is now to infect all the other light players and convert them into Dark Matter via killing them direct or indirect, you act as a leader to the Dark Matter as you are the root of the infection, therefore if you die all existing Dark Matter will also lose 10 starlight. if you fail to convert every other player into Dark Matter you will be set down 2 Life Colors, you may kill other Dark Matter and Darkness players if you wish however this will not contribute towards your overall goal. %{_darknessText}% is the other Darkness, you may work with them to infect the rest of the players" to {_p}
+        else if {StarlightLife::Apocalypse::Light::*} contains uuid of {_p}:
+            send "&aYou are Light! You are normal!" to {_p}
+        else:
+            send "&aYou have no role." to {_p} 
+
 
 command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
     permission: op
@@ -340,6 +364,10 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                 broadcast "&aThe Session has startedd!"
                 play sound "block.beacon.activate" to all players
                 set {StarlightLife::Session} to true
+                if "%all enabled scripts%" contains "infection.sk":
+                    wait 5 seconds
+                    broadcast formatted "<#525252>You feel a strange force overshadowing you..."
+                    play sound "minecraft:entity.wither.spawn" at volume 0.2 and pitch 0.2 to all players 
             else if arg-2 = "end":
                 FailRoles()
                 broadcast "&cThe Session has ended!"
@@ -412,8 +440,8 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                         send "&7You are &9&lThe Dawnbringer&r&7. Every 10 seconds you are at least 3 blocks near a player, you lose 1 Starlight and transfer it to them. After transfering 25 Starlight you will be &acured&7. Have fun being the light of the server!" to {_p}
                     send "&a%{_p}%'s role has been set to %proper case arg-4% by %sender%"
         else if arg-1 = "apocalypse":
-            if {StarlightLife::Apocalypse::Loaded} isn't set:
-                send "&cStarlight Life Apocalypse addon is required to execute this command."
+            if "%all enabled scripts%" does not contain "infection.sk":
+                send "&cStarlight Life Apocalypse addon is required to execute this command. Could not find ""infection.sk""."
                 stop
             if arg-2 = "roll":
                 if arg-3 parsed as integer is set:
@@ -428,19 +456,31 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
             else if arg-2 = "setrole":
                 set {_p} to arg-3 parsed as player
                 set {_p} to arg-3 parsed as offline player if {_p} isn't set
-                if arg-4 = "light":
-                    remove uuid of {_p} from {StarlightLife::Apocalypse::Darkness::*} if {StarlightLife::Apocalypse::Darkness::*} contains uuid of {_p}
-                    remove uuid of {_p} from {StarlightLife::Apocalypse::DarkMatter::*} if {StarlightLife::Apocalypse::DarkMatter::*} contains uuid of {_p}
-                    send "&a%{_p}% is now light."
-                    stop
-                if arg-4 != "darkness" or "darkmatter":
+                remove uuid of {_p} from {StarlightLife::Apocalypse::Darkness::*} if {StarlightLife::Apocalypse::Darkness::*} contains uuid of {_p}
+                remove uuid of {_p} from {StarlightLife::Apocalypse::DarkMatter::*} if {StarlightLife::Apocalypse::DarkMatter::*} contains uuid of {_p}
+                remove uuid of {_p} from {StarlightLife::Apocalypse::Light::*} if {StarlightLife::Apocalypse::Light::*} contains uuid of {_p}
+                if arg-4 != "darkness", "light" or "darkmatter":
                     send "&c%arg-4% is not a valid role"
                     stop
                 add uuid of {_p} to {StarlightLife::Apocalypse::%arg-4%::*} if {StarlightLife::Apocalypse::%arg-4%::*} doesn't contain uuid of {_p}
+                updateInfectedTeam({_p})
+                if size of {StarlightLife::Apocalypse::DarkMatter::*} >= 12:
+                    loop offline players from {StarlightLife::Apocalypse::DarkMatter::*} and {StarlightLife::Apocalypse::Darkness::*}:
+                        updateInfectedTeam(loop-value)
                 send "&a%{_p}% has been set to %strict proper case arg-4%"
+            else if arg-2 = "darkfail":
+                failDarkness()
+                send "&aFailed infected players"
             else if arg-2 = "darkcure":
-                
-
+                cureDarkness()
+                send "&aCured infected players"
+            else if arg-2 = "end":
+                cureDarkness()
+                send "&aApocalypse has been turned off"
+            else if arg-2 = "lightglow":
+                set {StarlightLife::Apocalypse::Glow} to false if {StarlightLife::Apocalypse::Glow} isn't set
+                set glowing of players from {StarlightLife::Apocalypse::Light::*} to inverse of {StarlightLife::Apocalypse::Glow}
+                set {StarlightLife::Apocalypse::Glow} to inverse of {StarlightLife::Apocalypse::Glow}
 
 
                                 
