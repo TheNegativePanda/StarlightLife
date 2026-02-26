@@ -74,7 +74,7 @@ local function Start():
         UpdateTeam(loop-player)
 
 
-local function loseStarlight(p: player , i: integer):
+function loseStarlight(p: player , i: integer):
     set {_color::*} to light red, orange, yellow, lime, light blue and magenta 
     make 100 of dust using dustOption({_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}, 1) at {_p} with offset vector(1, 1, 1) with force
     send title formatted "<%{_color::%{StarlightLife::Data::%{_p}'s uuid%::Lives}%}%><bold>%{StarlightLife::Data::%{_p}'s uuid%::Starlight}%☆" to {_p} for 5 seconds with fadein 0 seconds and fade out 1 seconds
@@ -445,7 +445,7 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                 stop
             if arg-2 = "roll":
                 if arg-3 parsed as integer is set:
-                    rollDarkness((all players), (arg-3 parsed as integer))
+                    rollDarkness((all players where [game mode of input != spectator]), (arg-3 parsed as integer))
                 else:
                     rollDarkness(all players)
             else if arg-2 = "preset":
@@ -463,10 +463,8 @@ command /starlightlife [<text>] [<text>] [<text>] [<text>] [<text>] [<text>]:
                     send "&c%arg-4% is not a valid role"
                     stop
                 add uuid of {_p} to {StarlightLife::Apocalypse::%arg-4%::*} if {StarlightLife::Apocalypse::%arg-4%::*} doesn't contain uuid of {_p}
-                updateInfectedTeam({_p})
-                if size of {StarlightLife::Apocalypse::DarkMatter::*} >= 12:
-                    loop offline players from {StarlightLife::Apocalypse::DarkMatter::*} and {StarlightLife::Apocalypse::Darkness::*}:
-                        updateInfectedTeam(loop-value)
+                processMilestones()
+
                 send "&a%{_p}% has been set to %strict proper case arg-4%"
             else if arg-2 = "darkfail":
                 failDarkness()
